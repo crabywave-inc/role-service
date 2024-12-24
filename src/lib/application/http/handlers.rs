@@ -1,3 +1,5 @@
+mod get_roles;
+
 use crate::application::http::responses::ApiResponseError;
 use axum::{http::StatusCode, response::IntoResponse, Json};
 use serde::Serialize;
