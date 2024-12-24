@@ -1,0 +1,31 @@
+use clap::Parser;
+
+use role::application::http::{HttpServer, HttpServerConfig};
+use role::application::ports::messaging_ports::{MessagingType, MessagingTypeImpl};
+use role::domain::role::services::RoleServiceImpl;
+use role::env::Env;
+use role::infrastructure::db::firestore::Firestore;
+use role::infrastructure::role::db::firestore_role_repository::FirestoreRoleRepository;
+use std::sync::Arc;
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    dotenv::dotenv().ok();
+    tracing_subscriber::fmt::init();
+
+    let env = Arc::new(Env::parse());
+
+    let _messaging_port =
+        Arc::new(MessagingTypeImpl::new(&MessagingType::PubSub, Arc::clone(&env)).await?);
+
+    let firestore = Arc::new(Firestore::new(Arc::clone(&env)).await?);
+
+    let role_repository = FirestoreRoleRepository::new(Arc::clone(&firestore));
+    let role_service = Arc::new(RoleServiceImpl::new(role_repository));
+
+    let server_config = HttpServerConfig::new(env.port.clone());
+    let http_server =
+        HttpServer::new(server_config, Arc::clone(&env), Arc::clone(&role_service)).await?;
+
+    http_server.run().await
+}
