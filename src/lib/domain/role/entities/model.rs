@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::domain::role::entities::permissions::Permissions;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Ord, PartialOrd)]
 pub struct Role {
@@ -26,27 +27,38 @@ impl Role {
         }
     }
 
+    pub fn from_request(request: CreateRoleRequest, server_id: &str, position: i32) -> Result<Self, String> {
+        let permissions = match request.permissions.parse::<u64>() {
+            Ok(value) => value,
+            Err(_) => return Err("Invalid permissions format".to_string()),
+        };
+
+        Ok(Role {
+            id: uuid::Uuid::new_v4().to_string(), // Génère un UUID unique
+            name: request.name,
+            server_id: server_id.to_string(),
+            color: request.color,
+            position,
+            permissions: format!("{:x}", permissions), // Stocke sous forme hexadécimale
+            hoist: request.hoist,
+            mentionable: request.mentionable,
+        })
+    }
+
     pub fn add_permission(&mut self, permission: Permissions) {
         let current_permissions = u64::from_str_radix(&self.permissions, 16).unwrap_or(0);
         self.permissions = format!("{:x}", current_permissions | (permission as u64));
     }
 
-    pub fn has_permission(&self, permission: Permissions) -> bool {
-        let current_permissions = u64::from_str_radix(&self.permissions, 16).unwrap_or(0);
-        (current_permissions & (permission as u64)) == (permission as u64)
+    pub fn get_permissions(&self) -> Vec<Permissions> {
+        let bitfield = self.permissions.parse::<u64>().unwrap_or(0);
+        Permissions::from_bitfield(bitfield)
     }
-}
 
-#[repr(u64)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Permissions {
-    Administrator = 0x0000000000000008, // 1 << 3
-    ManageChannels = 0x0000000000000010, // 1 << 4
-    ManageGuild = 0x0000000000000020, // 1 << 5
-    ViewChannel = 0x0000000000000400, // 1 << 10
-    SendMessages = 0x0000000000000800, // 1 << 11
-    ManageMessages = 0x0000000000001000, // 1 << 12
-    ManageRoles = 0x0000000000002000, // 1 << 13
+    pub fn has_permission(&self, permission: Permissions) -> bool {
+        let bitfield = u64::from_str_radix(&self.permissions, 16).unwrap_or(0);
+        (bitfield & (permission as u64)) == (permission as u64)
+    }
 }
 
 #[derive(Deserialize)]
@@ -61,6 +73,7 @@ pub struct CreateRoleRequest {
 
 #[cfg(test)]
 mod tests {
+    use crate::domain::role::entities::permissions::Permissions;
     use super::*;
 
     #[test]
@@ -101,6 +114,26 @@ mod tests {
         assert!(role.has_permission(Permissions::ManageGuild));
 
         assert!(!role.has_permission(Permissions::SendMessages));
+    }
+
+    #[test]
+    fn test_get_permissions() {
+        let role = Role {
+            id: String::from("1"),
+            name: String::from("Moderator"),
+            server_id: String::from("server1"),
+            color: String::from("#00FF00"),
+            position: 2,
+            permissions: String::from("8208"), // MANAGE_CHANNELS + MANAGE_ROLES
+            hoist: true,
+            mentionable: false,
+        };
+
+        let permissions = role.get_permissions();
+
+        assert!(permissions.contains(&Permissions::ManageChannels));
+        assert!(permissions.contains(&Permissions::ManageRoles));
+        assert!(!permissions.contains(&Permissions::Administrator));
     }
 
 }
