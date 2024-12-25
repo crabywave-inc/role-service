@@ -1,4 +1,5 @@
-mod get_roles;
+pub mod create_role;
+pub mod get_roles;
 
 use crate::application::http::responses::ApiResponseError;
 use axum::{http::StatusCode, response::IntoResponse, Json};

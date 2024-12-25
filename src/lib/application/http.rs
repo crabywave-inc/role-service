@@ -3,6 +3,8 @@ mod handlers;
 mod responses;
 
 use crate::application::http::auth::AuthenticationLayer;
+use crate::application::http::handlers::create_role::create_role;
+use crate::application::http::handlers::get_roles::get_roles;
 use crate::domain::role::ports::RoleService;
 use crate::env::Env;
 use anyhow::Context;
@@ -88,4 +90,6 @@ where
     R: RoleService,
 {
     axum::Router::new()
+        .route("/guilds/:guild_id/roles", get(get_roles::<R>))
+        .route("/guilds/:guild_id/roles", post(create_role::<R>))
 }

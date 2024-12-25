@@ -1,12 +1,13 @@
-use axum::Extension;
+use std::sync::Arc;
 use crate::application::http::handlers::{ApiError, ApiSuccess};
 use crate::domain::role::ports::RoleService;
+use axum::Extension;
 
-async fn get_roles<R>(
-    Extension(role_service): Extension<R>
+pub async fn get_roles<R>(
+    Extension(_role_service): Extension<Arc<R>>,
 ) -> Result<ApiSuccess<String>, ApiError>
 where
-    R: RoleService
+    R: RoleService,
 {
     todo!("Implement the get_roles handler")
 }
