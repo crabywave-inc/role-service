@@ -1,3 +1,5 @@
+use crate::domain::role::entities::error::RoleError;
+use crate::domain::role::entities::model::{CreateRoleRequest, Role};
 use crate::domain::role::ports::{RoleRepository, RoleService};
 
 #[derive(Debug, Clone)]
@@ -17,4 +19,8 @@ where
     }
 }
 
-impl<R> RoleService for RoleServiceImpl<R> where R: RoleRepository {}
+impl<R> RoleService for RoleServiceImpl<R> where R: RoleRepository {
+    async fn create_role(&self, server_id: &str, payload: CreateRoleRequest) -> Result<Role, RoleError> {
+        self.role_repository.create(server_id, payload).await
+    }
+}
