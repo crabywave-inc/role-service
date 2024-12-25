@@ -1,9 +1,8 @@
-use std::future::Future;
-use std::sync::Arc;
 use crate::domain::member::entities::error::MemberError;
 use crate::domain::member::entities::model::Member;
 use crate::domain::member::ports::MemberRepository;
 use crate::infrastructure::db::firestore::Firestore;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct FirestoreMemberRepository {

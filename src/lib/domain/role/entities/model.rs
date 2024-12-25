@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::domain::role::entities::permissions::Permissions;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Ord, PartialOrd)]
 pub struct Role {
@@ -27,7 +27,11 @@ impl Role {
         }
     }
 
-    pub fn from_request(request: CreateRoleRequest, server_id: &str, position: i32) -> Result<Self, String> {
+    pub fn from_request(
+        request: CreateRoleRequest,
+        server_id: &str,
+        position: i32,
+    ) -> Result<Self, String> {
         let permissions = match request.permissions.parse::<u64>() {
             Ok(value) => value,
             Err(_) => return Err("Invalid permissions format".to_string()),
@@ -70,11 +74,10 @@ pub struct CreateRoleRequest {
     pub mentionable: bool,
 }
 
-
 #[cfg(test)]
 mod tests {
-    use crate::domain::role::entities::permissions::Permissions;
     use super::*;
+    use crate::domain::role::entities::permissions::Permissions;
 
     #[test]
     fn test_add_permission() {
@@ -135,5 +138,4 @@ mod tests {
         assert!(permissions.contains(&Permissions::ManageRoles));
         assert!(!permissions.contains(&Permissions::Administrator));
     }
-
 }

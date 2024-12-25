@@ -2,9 +2,11 @@ use clap::Parser;
 
 use role::application::http::{HttpServer, HttpServerConfig};
 use role::application::ports::messaging_ports::{MessagingType, MessagingTypeImpl};
+use role::domain::member::services::MemberServiceImpl;
 use role::domain::role::services::RoleServiceImpl;
 use role::env::Env;
 use role::infrastructure::db::firestore::Firestore;
+use role::infrastructure::member::db::firestore_member_repository::FirestoreMemberRepository;
 use role::infrastructure::role::db::firestore_role_repository::FirestoreRoleRepository;
 use std::sync::Arc;
 
@@ -23,9 +25,17 @@ async fn main() -> anyhow::Result<()> {
     let role_repository = FirestoreRoleRepository::new(Arc::clone(&firestore));
     let role_service = Arc::new(RoleServiceImpl::new(role_repository));
 
+    let member_repository = FirestoreMemberRepository::new(Arc::clone(&firestore));
+    let member_service = Arc::new(MemberServiceImpl::new(member_repository));
+
     let server_config = HttpServerConfig::new(env.port.clone());
-    let http_server =
-        HttpServer::new(server_config, Arc::clone(&env), Arc::clone(&role_service)).await?;
+    let http_server = HttpServer::new(
+        server_config,
+        Arc::clone(&env),
+        Arc::clone(&role_service),
+        Arc::clone(&member_service),
+    )
+    .await?;
 
     http_server.run().await
 }

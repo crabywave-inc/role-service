@@ -17,7 +17,6 @@ impl FirestoreRoleRepository {
 
 impl RoleRepository for FirestoreRoleRepository {
     async fn create(&self, server_id: &str, payload: CreateRoleRequest) -> Result<Role, RoleError> {
-
         let id = uuid::Uuid::new_v4().to_string();
         let role = Role {
             id,

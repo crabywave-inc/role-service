@@ -5,6 +5,7 @@ mod responses;
 use crate::application::http::auth::AuthenticationLayer;
 use crate::application::http::handlers::create_role::create_role;
 use crate::application::http::handlers::get_roles::get_roles;
+use crate::domain::member::ports::MemberService;
 use crate::domain::role::ports::RoleService;
 use crate::env::Env;
 use anyhow::Context;
@@ -26,11 +27,13 @@ impl HttpServerConfig {
 }
 
 #[derive(Debug, Clone)]
-struct AppState<R>
+struct AppState<R, M>
 where
     R: RoleService,
+    M: MemberService,
 {
     role_service: Arc<R>,
+    member_service: Arc<M>,
 }
 
 pub struct HttpServer {
@@ -39,13 +42,15 @@ pub struct HttpServer {
 }
 
 impl HttpServer {
-    pub async fn new<R>(
+    pub async fn new<R, M>(
         config: HttpServerConfig,
         env: Arc<Env>,
         role_service: Arc<R>,
+        member_service: Arc<M>,
     ) -> anyhow::Result<Self>
     where
         R: RoleService,
+        M: MemberService,
     {
         let trace_layer = tower_http::trace::TraceLayer::new_for_http().make_span_with(
             |request: &axum::extract::Request| {
@@ -54,7 +59,10 @@ impl HttpServer {
             },
         );
 
-        let state = AppState { role_service };
+        let state = AppState {
+            role_service,
+            member_service,
+        };
 
         let auth_layer = AuthenticationLayer::new(env.auth_service_url.clone());
 
@@ -63,6 +71,7 @@ impl HttpServer {
             .layer(trace_layer)
             .layer(auth_layer)
             .layer(Extension(Arc::clone(&state.role_service)))
+            .layer(Extension(Arc::clone(&state.member_service)))
             .with_state(state);
 
         let listener = net::TcpListener::bind(format!("0.0.0.0:{}", config.port))
@@ -85,9 +94,10 @@ impl HttpServer {
     }
 }
 
-fn api_routes<R>() -> axum::Router<AppState<R>>
+fn api_routes<R, M>() -> axum::Router<AppState<R, M>>
 where
     R: RoleService,
+    M: MemberService,
 {
     axum::Router::new()
         .route("/guilds/:guild_id/roles", get(get_roles::<R>))

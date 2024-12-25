@@ -19,8 +19,15 @@ where
     }
 }
 
-impl<R> RoleService for RoleServiceImpl<R> where R: RoleRepository {
-    async fn create_role(&self, server_id: &str, payload: CreateRoleRequest) -> Result<Role, RoleError> {
+impl<R> RoleService for RoleServiceImpl<R>
+where
+    R: RoleRepository,
+{
+    async fn create_role(
+        &self,
+        server_id: &str,
+        payload: CreateRoleRequest,
+    ) -> Result<Role, RoleError> {
         self.role_repository.create(server_id, payload).await
     }
 }
