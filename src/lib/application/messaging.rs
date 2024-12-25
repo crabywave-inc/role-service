@@ -1,9 +1,9 @@
-use std::sync::Arc;
-use anyhow::Result;
 use crate::application::ports::messaging_ports::{MessagingPort, MessagingTypeImpl};
-use crate::domain::member::events::MemberCreatedEvent;
+use crate::domain::member::events::{MemberCreatedEvent, MemberRoleAddedEvent};
 use crate::domain::member::ports::MemberService;
 use crate::domain::role::ports::RoleService;
+use anyhow::Result;
+use std::sync::Arc;
 
 pub async fn start_subscriptions<R, M>(
     messaging: Arc<MessagingTypeImpl>,
@@ -17,6 +17,7 @@ where
     let messaging = Arc::clone(&messaging);
 
     messaging
+        // members -> member @TODO: Change this to member-created
         .subscribe("members-created-role", {
             let member_service = Arc::clone(&member_service);
 
@@ -24,6 +25,20 @@ where
                 let member_service = Arc::clone(&member_service);
                 async move {
                     member_service.create(msg).await?;
+                    Ok(())
+                }
+            }
+        })
+        .await?;
+
+    messaging
+        .subscribe("member-roles-added-role", {
+            let member_service = Arc::clone(&member_service);
+
+            move |msg: MemberRoleAddedEvent| {
+                let member_service = Arc::clone(&member_service);
+                async move {
+                    member_service.add_role(&msg.member_id, &msg.role_id).await?;
                     Ok(())
                 }
             }

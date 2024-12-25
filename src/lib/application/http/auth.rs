@@ -124,7 +124,10 @@ pub struct UserPayload {
     pub id: String,
 }
 
-async fn verify_token_with_auth_service(auth_service_url: &str, token: &str) -> Result<UserPayload, ()> {
+async fn verify_token_with_auth_service(
+    auth_service_url: &str,
+    token: &str,
+) -> Result<UserPayload, ()> {
     let client = Client::new();
     let response = client
         .post(format!("{}/auth/verify", auth_service_url))

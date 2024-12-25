@@ -1,4 +1,6 @@
+use crate::application::http::auth::UserPayload;
 use crate::application::http::handlers::{ApiError, ApiSuccess};
+use crate::domain::member::ports::MemberService;
 use crate::domain::role::entities::model::{CreateRoleRequest, Role};
 use crate::domain::role::ports::RoleService;
 use axum::extract::Path;
@@ -6,8 +8,6 @@ use axum::http::StatusCode;
 use axum::{Extension, Json};
 use serde::Serialize;
 use std::sync::Arc;
-use crate::application::http::auth::UserPayload;
-use crate::domain::member::ports::MemberService;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 pub struct CreateRoleResponseData(Role);
