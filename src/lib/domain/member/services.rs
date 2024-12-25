@@ -1,8 +1,8 @@
-use std::future::Future;
 use crate::domain::member::entities::error::MemberError;
 use crate::domain::member::entities::model::Member;
 use crate::domain::member::events::MemberCreatedEvent;
 use crate::domain::member::ports::{MemberRepository, MemberService};
+use std::future::Future;
 
 #[derive(Debug, Clone)]
 pub struct MemberServiceImpl<M>
@@ -30,11 +30,19 @@ where
 
         match member {
             Some(member) => Ok(member),
-            None => Err(MemberError::NotFound),
+            None => Err(MemberError::NotFound(format!(
+                "Member with id {} not found",
+                member_id
+            ))),
         }
     }
 
     async fn create(&self, payload: MemberCreatedEvent) -> Result<Member, MemberError> {
-        todo!()
+        self.member_repository.create(payload).await
+    }
+
+    async fn add_role(&self, member_id: &str, role_id: &str) -> Result<Member, MemberError> {
+        self.member_repository.add_role(member_id, role_id)
+            .await
     }
 }
