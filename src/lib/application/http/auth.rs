@@ -83,9 +83,9 @@ where
             match token {
                 Some(token) => {
                     match verify_token_with_auth_service(&auth_service_url, &token).await {
-                        Ok(email) => {
+                        Ok(data) => {
                             // Ajouter l'email dans les extensions
-                            request.extensions_mut().insert(email);
+                            request.extensions_mut().insert(data);
 
                             // Passer la requête au middleware suivant
                             inner.call(request).await
@@ -115,15 +115,16 @@ where
 
 #[derive(Deserialize)]
 struct VerifyResponse {
-    data: VerifyData,
+    data: UserPayload,
 }
 
-#[derive(Deserialize)]
-struct VerifyData {
-    email: String,
+#[derive(Debug, Deserialize, Clone)]
+pub struct UserPayload {
+    pub email: String,
+    pub id: String,
 }
 
-async fn verify_token_with_auth_service(auth_service_url: &str, token: &str) -> Result<String, ()> {
+async fn verify_token_with_auth_service(auth_service_url: &str, token: &str) -> Result<UserPayload, ()> {
     let client = Client::new();
     let response = client
         .post(format!("{}/auth/verify", auth_service_url))
@@ -134,7 +135,7 @@ async fn verify_token_with_auth_service(auth_service_url: &str, token: &str) -> 
 
     if response.status().is_success() {
         let verify_response: VerifyResponse = response.json().await.map_err(|_| ())?;
-        Ok(verify_response.data.email) // Retourne l'email
+        Ok(verify_response.data)
     } else {
         Err(())
     }

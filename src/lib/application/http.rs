@@ -101,5 +101,5 @@ where
 {
     axum::Router::new()
         .route("/guilds/:guild_id/roles", get(get_roles::<R>))
-        .route("/guilds/:guild_id/roles", post(create_role::<R>))
+        .route("/guilds/:guild_id/roles", post(create_role::<R, M>))
 }

@@ -1,5 +1,7 @@
+use std::future::Future;
 use crate::domain::member::entities::error::MemberError;
 use crate::domain::member::entities::model::Member;
+use crate::domain::member::events::MemberCreatedEvent;
 use crate::domain::member::ports::{MemberRepository, MemberService};
 
 #[derive(Debug, Clone)]
@@ -30,5 +32,9 @@ where
             Some(member) => Ok(member),
             None => Err(MemberError::NotFound),
         }
+    }
+
+    async fn create(&self, payload: MemberCreatedEvent) -> Result<Member, MemberError> {
+        todo!()
     }
 }
