@@ -1,5 +1,5 @@
 #[repr(u64)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Permissions {
     Administrator = 0x0000000000000008,  // 1 << 3
     ManageChannels = 0x0000000000000010, // 1 << 4

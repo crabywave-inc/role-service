@@ -1,6 +1,6 @@
 use crate::domain::role::entities::error::RoleError;
 use crate::domain::role::entities::model::{CreateRoleRequest, Role};
-use crate::domain::role::ports::RoleRepository;
+use crate::domain::role::ports::role::RoleRepository;
 use crate::infrastructure::db::firestore::Firestore;
 use std::sync::Arc;
 
@@ -43,7 +43,22 @@ impl RoleRepository for FirestoreRoleRepository {
         Ok(role)
     }
 
-    async fn find_by_server_id(&self, _role_id: &str) -> Result<Vec<Role>, RoleError> {
+    async fn find_by_server_id(&self, _server_id: &str) -> Result<Vec<Role>, RoleError> {
         todo!()
+    }
+
+    async fn find_by_id(&self, role_id: &str) -> Result<Option<Role>, RoleError> {
+        let role: Option<Role> = self
+            .firestore
+            .db
+            .fluent()
+            .select()
+            .by_id_in("roles")
+            .obj()
+            .one(role_id)
+            .await
+            .map_err(|_| RoleError::NotFound)?;
+
+        Ok(role)
     }
 }

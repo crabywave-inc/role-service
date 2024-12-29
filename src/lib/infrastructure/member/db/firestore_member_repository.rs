@@ -3,21 +3,9 @@ use crate::domain::member::entities::model::Member;
 use crate::domain::member::events::MemberCreatedEvent;
 use crate::domain::member::ports::MemberRepository;
 use crate::infrastructure::db::firestore::Firestore;
-use firestore::struct_path::paths;
-use firestore::{FirestoreFieldTransform, FirestoreValue};
-use serde::Serialize;
-use serde_json::json;
-use std::collections::HashMap;
 use std::fmt::Debug;
-use std::future::Future;
 use std::sync::Arc;
 use tracing::info;
-
-#[derive(Serialize)]
-struct UpdateRoleIds {
-    #[serde(rename = "role_ids")]
-    role_ids: Vec<String>,
-}
 
 #[derive(Debug, Clone)]
 pub struct FirestoreMemberRepository {
@@ -46,6 +34,34 @@ impl MemberRepository for FirestoreMemberRepository {
         Ok(member)
     }
 
+    async fn find_by_user_id(
+        &self,
+        user_id: &str,
+        guild_id: &str,
+    ) -> Result<Option<Member>, MemberError> {
+        let members = self
+            .firestore
+            .db
+            .fluent()
+            .select()
+            .from("members")
+            .filter(|q| {
+                q.for_all(
+                    q.field("user_id")
+                        .eq(user_id) // Filtre sur `user_id`
+                        .and(q.field("guild_id").eq(guild_id)), // Filtre sur `guild_id`
+                )
+            })
+            .obj::<Member>()
+            .query()
+            .await
+            .map_err(|e| MemberError::NotFound(e.to_string()))?;
+
+        let member = members.first().cloned();
+
+        Ok(member)
+    }
+
     async fn create(&self, payload: MemberCreatedEvent) -> Result<Member, MemberError> {
         let member = Member::from_event(payload);
 
@@ -68,16 +84,15 @@ impl MemberRepository for FirestoreMemberRepository {
         let existing_member = self
             .find_by_id(member_id)
             .await?
-            .ok_or(MemberError::NotFound(format!("member {} not found", member_id)))?;
+            .ok_or(MemberError::NotFound(format!(
+                "member {} not found",
+                member_id
+            )))?;
 
         let mut updated_role_ids = existing_member.role_ids.clone();
         if !updated_role_ids.contains(&role_id.to_string()) {
             updated_role_ids.push(role_id.to_string());
         }
-
-        let update_payload = UpdateRoleIds {
-            role_ids: vec![role_id.to_string()],
-        };
 
         let member = self
             .firestore
@@ -98,6 +113,36 @@ impl MemberRepository for FirestoreMemberRepository {
     }
 
     async fn remove_role(&self, member_id: &str, role_id: &str) -> Result<Member, MemberError> {
-        todo!()
+        info!("Removing role {} from member {}", role_id, member_id);
+        let existing_member = self
+            .find_by_id(member_id)
+            .await?
+            .ok_or(MemberError::NotFound(format!(
+                "member {} not found",
+                member_id
+            )))?;
+
+        let mut updated_role_ids = existing_member.role_ids.clone();
+
+        if let Some(index) = updated_role_ids.iter().position(|r| r == role_id) {
+            updated_role_ids.remove(index);
+        }
+
+        let member = self
+            .firestore
+            .db
+            .fluent()
+            .update()
+            .in_col("members")
+            .document_id(member_id)
+            .object(&Member {
+                role_ids: updated_role_ids,
+                ..existing_member.clone()
+            })
+            .execute::<Member>()
+            .await
+            .map_err(|e| MemberError::UpdateError(e.to_string()))?;
+
+        Ok(member)
     }
 }

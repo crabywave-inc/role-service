@@ -2,7 +2,7 @@ use crate::application::http::auth::UserPayload;
 use crate::application::http::handlers::{ApiError, ApiSuccess};
 use crate::domain::member::ports::MemberService;
 use crate::domain::role::entities::model::{CreateRoleRequest, Role};
-use crate::domain::role::ports::RoleService;
+use crate::domain::role::ports::role::RoleService;
 use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::{Extension, Json};

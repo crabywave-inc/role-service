@@ -6,7 +6,8 @@ use crate::application::http::auth::AuthenticationLayer;
 use crate::application::http::handlers::create_role::create_role;
 use crate::application::http::handlers::get_roles::get_roles;
 use crate::domain::member::ports::MemberService;
-use crate::domain::role::ports::RoleService;
+use crate::domain::role::ports::permission::PermissionService;
+use crate::domain::role::ports::role::RoleService;
 use crate::env::Env;
 use anyhow::Context;
 use axum::routing::{get, post};
@@ -27,13 +28,15 @@ impl HttpServerConfig {
 }
 
 #[derive(Debug, Clone)]
-struct AppState<R, M>
+struct AppState<R, M, P>
 where
     R: RoleService,
     M: MemberService,
+    P: PermissionService,
 {
     role_service: Arc<R>,
     member_service: Arc<M>,
+    permission_service: Arc<P>,
 }
 
 pub struct HttpServer {
@@ -42,15 +45,17 @@ pub struct HttpServer {
 }
 
 impl HttpServer {
-    pub async fn new<R, M>(
+    pub async fn new<R, M, P>(
         config: HttpServerConfig,
         env: Arc<Env>,
         role_service: Arc<R>,
         member_service: Arc<M>,
+        permission_service: Arc<P>,
     ) -> anyhow::Result<Self>
     where
         R: RoleService,
         M: MemberService,
+        P: PermissionService,
     {
         let trace_layer = tower_http::trace::TraceLayer::new_for_http().make_span_with(
             |request: &axum::extract::Request| {
@@ -62,6 +67,7 @@ impl HttpServer {
         let state = AppState {
             role_service,
             member_service,
+            permission_service,
         };
 
         let auth_layer = AuthenticationLayer::new(env.auth_service_url.clone());
@@ -72,6 +78,7 @@ impl HttpServer {
             .layer(auth_layer)
             .layer(Extension(Arc::clone(&state.role_service)))
             .layer(Extension(Arc::clone(&state.member_service)))
+            .layer(Extension(Arc::clone(&state.permission_service)))
             .with_state(state);
 
         let listener = net::TcpListener::bind(format!("0.0.0.0:{}", config.port))
@@ -94,12 +101,13 @@ impl HttpServer {
     }
 }
 
-fn api_routes<R, M>() -> axum::Router<AppState<R, M>>
+fn api_routes<R, M, P>() -> axum::Router<AppState<R, M, P>>
 where
     R: RoleService,
     M: MemberService,
+    P: PermissionService,
 {
     axum::Router::new()
-        .route("/guilds/:guild_id/roles", get(get_roles::<R>))
+        .route("/guilds/:guild_id/roles", get(get_roles::<R, M, P>))
         .route("/guilds/:guild_id/roles", post(create_role::<R, M>))
 }

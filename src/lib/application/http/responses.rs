@@ -1,5 +1,5 @@
-use crate::application::http::handlers::ApiError;
-use crate::domain::role::entities::error::RoleError;
+use crate::domain::role::entities::error::{PermissionError, RoleError};
+use crate::{application::http::handlers::ApiError, domain::member::entities::error::MemberError};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -41,6 +41,30 @@ impl From<RoleError> for ApiError {
             RoleError::NotFound => ApiError::NotFound("Guild not found".to_string()),
             RoleError::CreateError(e) => ApiError::UnProcessableEntity(e),
             RoleError::Unauthorized => ApiError::Unauthorized("Unauthorized".to_string()),
+        }
+    }
+}
+
+impl From<MemberError> for ApiError {
+    fn from(value: MemberError) -> Self {
+        match value {
+            MemberError::NotFound(e) => ApiError::NotFound(e),
+            MemberError::CreateError(e) => ApiError::UnProcessableEntity(e),
+            MemberError::InternalServerError => {
+                ApiError::InternalServerError("Internal server error".to_string())
+            }
+            MemberError::Unauthorized => ApiError::Unauthorized("Unauthorized".to_string()),
+            MemberError::UpdateError(e) => ApiError::UnProcessableEntity(e),
+        }
+    }
+}
+
+impl From<PermissionError> for ApiError {
+    fn from(value: PermissionError) -> Self {
+        match value {
+            PermissionError::NotFound => ApiError::NotFound("Permission not found".to_string()),
+            PermissionError::MemberError(e) => ApiError::InternalServerError(e),
+            PermissionError::RoleError(e) => ApiError::InternalServerError(e),
         }
     }
 }
