@@ -46,11 +46,10 @@ impl MemberRepository for FirestoreMemberRepository {
             .select()
             .from("members")
             .filter(|q| {
-                q.for_all(
-                    q.field("user_id")
-                        .eq(user_id) // Filtre sur `user_id`
-                        .and(q.field("guild_id").eq(guild_id)), // Filtre sur `guild_id`
-                )
+                q.for_all([
+                    q.field("user_id").eq(user_id),
+                    q.field("guild_id").eq(guild_id),
+                ])
             })
             .obj::<Member>()
             .query()
