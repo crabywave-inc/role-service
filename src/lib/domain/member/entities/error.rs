@@ -6,6 +6,8 @@ pub enum MemberError {
     NotFound(String),
     #[error("Unauthorized")]
     Unauthorized,
+    #[error("Forbidden")]
+    Forbidden,
     #[error("Internal server error")]
     InternalServerError,
     #[error("Failed to create member: {0}")]

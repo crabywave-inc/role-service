@@ -82,7 +82,7 @@ where
             .role_service
             .get_roles(role_ids)
             .await
-            .map_err(|e| MemberError::InternalServerError)?;
+            .map_err(|_| MemberError::InternalServerError)?;
 
         Ok(roles)
     }
