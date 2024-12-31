@@ -41,6 +41,7 @@ impl From<RoleError> for ApiError {
             RoleError::NotFound => ApiError::NotFound("Guild not found".to_string()),
             RoleError::CreateError(e) => ApiError::UnProcessableEntity(e),
             RoleError::Unauthorized => ApiError::Unauthorized("Unauthorized".to_string()),
+            RoleError::Forbidden => ApiError::Forbidden("Forbidden".to_string()),
         }
     }
 }
@@ -55,6 +56,7 @@ impl From<MemberError> for ApiError {
             }
             MemberError::Unauthorized => ApiError::Unauthorized("Unauthorized".to_string()),
             MemberError::UpdateError(e) => ApiError::UnProcessableEntity(e),
+            MemberError::Forbidden => ApiError::Forbidden("Forbidden".to_string()),
         }
     }
 }

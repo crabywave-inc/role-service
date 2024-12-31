@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 pub async fn start_subscriptions<R, M>(
     messaging: Arc<MessagingTypeImpl>,
-    role_service: Arc<R>,
+    _role_service: Arc<R>,
     member_service: Arc<M>,
 ) -> Result<()>
 where
@@ -18,7 +18,7 @@ where
 
     messaging
         // members -> member @TODO: Change this to member-created
-        .subscribe("members-created-role", {
+        .subscribe("member-created-role", {
             let member_service = Arc::clone(&member_service);
 
             move |msg: MemberCreatedEvent| {
