@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 pub struct Role {
     pub id: String,
     pub name: String,
-    pub server_id: String,
+    pub guild_id: String,
     pub color: String,
     pub position: i32,
     pub permissions: String,
@@ -14,11 +14,11 @@ pub struct Role {
 }
 
 impl Role {
-    pub fn new(id: &str, name: &str, server_id: &str, color: &str, position: i32) -> Self {
+    pub fn new(id: &str, name: &str, guild_id: &str, color: &str, position: i32) -> Self {
         Role {
             id: id.to_string(),
             name: name.to_string(),
-            server_id: server_id.to_string(),
+            guild_id: guild_id.to_string(),
             color: color.to_string(),
             position,
             permissions: "0".to_string(),
@@ -29,7 +29,7 @@ impl Role {
 
     pub fn from_request(
         request: CreateRoleRequest,
-        server_id: &str,
+        guild_id: &str,
         position: i32,
     ) -> Result<Self, String> {
         let permissions = match request.permissions.parse::<u64>() {
@@ -40,7 +40,7 @@ impl Role {
         Ok(Role {
             id: uuid::Uuid::new_v4().to_string(), // Génère un UUID unique
             name: request.name,
-            server_id: server_id.to_string(),
+            guild_id: guild_id.to_string(),
             color: request.color,
             position,
             permissions: format!("{:x}", permissions), // Stocke sous forme hexadécimale
@@ -124,7 +124,7 @@ mod tests {
         let role = Role {
             id: String::from("1"),
             name: String::from("Moderator"),
-            server_id: String::from("server1"),
+            guild_id: String::from("guild_id1"),
             color: String::from("#00FF00"),
             position: 2,
             permissions: String::from("8208"), // MANAGE_CHANNELS + MANAGE_ROLES

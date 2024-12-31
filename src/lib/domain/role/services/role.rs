@@ -25,10 +25,10 @@ where
 {
     async fn create_role(
         &self,
-        server_id: &str,
+        guild_id: &str,
         payload: CreateRoleRequest,
     ) -> Result<Role, RoleError> {
-        self.role_repository.create(server_id, payload).await
+        self.role_repository.create(guild_id, payload).await
     }
 
     async fn get_roles(&self, role_ids: Vec<String>) -> Result<Vec<Role>, RoleError> {
@@ -43,5 +43,9 @@ where
         }
 
         Ok(roles)
+    }
+
+    async fn find_by_guild_id(&self, guild_id: &str) -> Result<Vec<Role>, RoleError> {
+        self.role_repository.find_by_guild_id(guild_id).await
     }
 }

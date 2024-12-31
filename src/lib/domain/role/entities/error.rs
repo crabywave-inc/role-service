@@ -6,6 +6,8 @@ pub enum RoleError {
     NotFound,
     #[error("Unauthorized")]
     Unauthorized,
+    #[error("Forbidden")]
+    Forbidden,
     #[error("Internal server error")]
     InternalServerError,
     #[error("Failed to create guild: {0}")]

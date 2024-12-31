@@ -40,4 +40,23 @@ impl Permissions {
             Permissions::ManageRoles => "Manage Roles",
         }
     }
+
+    pub fn has_permissions(
+        permissions: &[Permissions],
+        required_permissions: &[Permissions],
+    ) -> bool {
+        required_permissions
+            .iter()
+            .all(|required_permission| permissions.contains(required_permission))
+    }
+
+
+    pub fn has_one_of_permissions(
+        permissions: &[Permissions],
+        required_permissions: &[Permissions],
+    ) -> bool {
+        required_permissions
+            .iter()
+            .any(|required_permission| permissions.contains(required_permission))
+    }
 }
